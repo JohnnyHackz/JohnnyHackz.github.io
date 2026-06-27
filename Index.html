@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jakob Berentsen — Security Engineer · Healthcare</title>
+<meta name="description" content="Jakob Berentsen — security engineer securing the systems a hospital runs on: SIEM and detection, identity, vulnerability management, and endpoint hardening across the full stack." />
+<meta name="author" content="Jakob Berentsen" />
+<link rel="canonical" href="https://jakobberentsen.com/" />
+<meta name="theme-color" content="#070b12" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://jakobberentsen.com/" />
+<meta property="og:title" content="Jakob Berentsen — Security Engineer · Healthcare" />
+<meta property="og:description" content="Security engineer securing systems that can't go down — SIEM, identity, vulnerability management, and endpoint hardening, proven in healthcare." />
+<meta property="og:image" content="https://jakobberentsen.com/og-card.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content="Jakob Berentsen" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Jakob Berentsen — Security Engineer · Healthcare" />
+<meta name="twitter:description" content="Full-stack defensive security, proven where downtime isn't an option." />
+<meta name="twitter:image" content="https://jakobberentsen.com/og-card.png" />
+
+<!-- Content Security Policy (meta-level; full header suite set at Cloudflare) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<style>
+/* ────────────────────────────────────────────────────────────
+   THE BRIEF: a career rendered as the thing it actually is —
+   a hospital's clinical infrastructure, monitored live, at night.
+   Not pixel art. A real operations console. Calm, precise, alive.
+
+   PALETTE — derived from monitor phosphor + sterile light
+   --ink        #070b12   deep console black-blue
+   --ink2       #0b111c   panel
+   --line       #182235   hairline
+   --line2      #233247   brighter hairline
+   --fog        #5d6b80   muted label
+   --bone       #dfe7f2   primary text
+   --vital      #38e0b0   vital teal (the heartbeat / signature)
+   --pulse      #f5c451   amber alert / human element
+   --crit       #ff5a6e   critical
+   TYPE: 'Space Grotesk' display · 'IBM Plex Mono' data/labels
+   ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#070b12; --ink2:#0b111c; --line:#182235; --line2:#233247;
+  --fog:#5d6b80; --bone:#dfe7f2; --vital:#38e0b0; --pulse:#f5c451; --crit:#ff5a6e;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);color:var(--bone);font-family:var(--disp);
+  line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 500px at 80% -10%, rgba(56,224,176,.06), transparent),
+    radial-gradient(700px 400px at -10% 30%, rgba(245,196,81,.04), transparent);
+}
+::selection{background:rgba(56,224,176,.25);color:#fff}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--mono)}
+
+/* faint scanline texture over everything */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+  mix-blend-mode:overlay;opacity:.5;
+}
+
+/* ── top status bar ─────────────────────────────── */
+.bar{
+  position:fixed;top:0;left:0;right:0;z-index:50;height:46px;
+  display:flex;align-items:center;gap:18px;padding:0 22px;
+  background:rgba(7,11,18,.82);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;
+}
+.bar .id{color:var(--bone);font-weight:600;letter-spacing:1px}
+.bar .id b{color:var(--vital)}
+.bar .dot{width:7px;height:7px;border-radius:50%;background:var(--vital);
+  box-shadow:0 0 8px var(--vital);animation:bp 2s infinite}
+@keyframes bp{0%,100%{opacity:1}50%{opacity:.35}}
+.bar .spacer{flex:1}
+.bar .stat{color:var(--fog)}
+.bar .stat b{color:var(--bone)}
+.bar nav{display:flex;gap:16px}
+.bar nav a{color:var(--fog);transition:color .2s}
+.bar nav a:hover{color:var(--vital)}
+@media(max-width:760px){.bar .stat.hide,.bar nav{display:none}}
+
+/* ── hero / monitor ─────────────────────────────── */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:120px 22px 60px;max-width:1180px;margin:0 auto;position:relative}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--vital);
+  text-transform:uppercase;margin-bottom:22px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--vital)}
+.hero h1{font-size:clamp(40px,8vw,92px);font-weight:700;letter-spacing:-2px;line-height:.98}
+.hero h1 .l2{color:var(--fog)}
+.hero .lede{margin-top:26px;max-width:600px;font-size:clamp(16px,2.2vw,20px);color:#aeb9c9;line-height:1.6}
+.hero .lede b{color:var(--bone);font-weight:500}
+
+/* live ECG strip */
+.ecg{margin-top:48px;border:1px solid var(--line);border-radius:10px;background:
+  linear-gradient(180deg,rgba(11,17,28,.9),rgba(7,11,18,.9));overflow:hidden}
+.ecg .ehead{display:flex;align-items:center;gap:14px;padding:12px 16px;
+  border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--fog)}
+.ecg .ehead .lab{color:var(--vital)}
+.ecg .ehead .rt{margin-left:auto;color:var(--bone)}
+.ecg canvas{display:block;width:100%;height:120px}
+.ecg .efoot{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line)}
+.ecg .efoot div{padding:12px 16px;border-right:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--fog)}
+.ecg .efoot div:last-child{border-right:none}
+.ecg .efoot b{display:block;font-size:18px;color:var(--bone);font-weight:600;margin-top:3px}
+.ecg .efoot b.v{color:var(--vital)}
+@media(max-width:640px){.ecg .efoot{grid-template-columns:repeat(2,1fr)}
+  .ecg .efoot div:nth-child(2){border-right:none}}
+
+.scrollcue{margin-top:40px;font-family:var(--mono);font-size:11px;color:var(--fog);
+  letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.scrollcue .arr{animation:fall 1.6s infinite}
+@keyframes fall{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(4px);opacity:1}}
+
+/* ── section frame ──────────────────────────────── */
+section{max-width:1180px;margin:0 auto;padding:90px 22px}
+.shead{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+.shead .num{font-family:var(--mono);font-size:12px;color:var(--vital)}
+.shead h2{font-size:clamp(26px,4vw,40px);font-weight:600;letter-spacing:-1px}
+.sintro{color:var(--fog);max-width:620px;font-family:var(--mono);font-size:13px;
+  margin-bottom:40px;line-height:1.7}
+
+/* ── systems grid (the rooms) ───────────────────── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.node{background:var(--ink2);padding:24px 22px;position:relative;
+  transition:background .25s, transform .25s;cursor:default;min-height:184px;display:flex;flex-direction:column}
+.node:hover{background:#0e1626}
+.node .top{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;color:var(--fog);margin-bottom:14px}
+.node .led{width:8px;height:8px;border-radius:50%;background:var(--vital);box-shadow:0 0 8px var(--vital)}
+.node.warn .led{background:var(--pulse);box-shadow:0 0 8px var(--pulse)}
+.node .top .st{margin-left:auto;letter-spacing:1px}
+.node .st.ok{color:var(--vital)}.node .st.act{color:var(--pulse)}
+.node h3{font-size:18px;font-weight:600;margin-bottom:4px;letter-spacing:-.3px}
+.node .sys{font-family:var(--mono);font-size:11px;color:var(--fog);margin-bottom:12px}
+.node p{font-size:14px;color:#a6b1c2;line-height:1.55;flex:1}
+.node .tags{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+.node .tags span{font-family:var(--mono);font-size:10px;color:var(--vital);
+  border:1px solid var(--line2);border-radius:4px;padding:3px 7px}
+.node::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--vital);transform:scaleY(0);transform-origin:top;transition:transform .3s}
+.node.warn::before{background:var(--pulse)}
+.node:hover::before{transform:scaleY(1)}
+
+/* ── timeline ───────────────────────────────────── */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:1px;background:var(--line2)}
+.tl .row{position:relative;padding:0 0 34px 0}
+.tl .row::before{content:"";position:absolute;left:-24px;top:5px;width:11px;height:11px;border-radius:50%;
+  background:var(--ink);border:2px solid var(--vital);box-shadow:0 0 10px rgba(56,224,176,.5)}
+.tl .row.now::before{background:var(--pulse);border-color:var(--pulse);box-shadow:0 0 12px rgba(245,196,81,.6);animation:bp 1.6s infinite}
+.tl .when{font-family:var(--mono);font-size:11px;color:var(--vital);letter-spacing:1px}
+.tl .role{font-size:19px;font-weight:600;margin:3px 0 2px}
+.tl .org{font-family:var(--mono);font-size:12px;color:var(--fog);margin-bottom:8px}
+.tl .desc{font-size:14px;color:#a6b1c2;max-width:680px;line-height:1.6}
+
+/* ── credentials strip ──────────────────────────── */
+.creds{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cred{background:var(--ink2);padding:18px 16px}
+.cred .k{font-family:var(--mono);font-size:11px;color:var(--fog);margin-bottom:6px}
+.cred .v{font-size:15px;font-weight:600;color:var(--bone)}
+.cred .v.prog{color:var(--pulse)}
+.cred .v.prog::after{content:" ◷";font-size:11px}
+
+/* ── trajectory ─────────────────────────────────── */
+.tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:8px}
+.track{display:block;border:1px solid var(--line);border-radius:10px;padding:20px;background:var(--ink2);
+  transition:border-color .25s}
+.track:hover{border-color:var(--vital)}
+.track .tn{font-family:var(--mono);font-size:11px;color:var(--vital);margin-bottom:10px;letter-spacing:1px}
+.track h4{font-size:17px;font-weight:600;margin-bottom:6px}
+.track p{font-size:13px;color:#9aa6b8;line-height:1.55}
+
+/* ── footer ─────────────────────────────────────── */
+footer{max-width:1180px;margin:0 auto;padding:70px 22px 110px;border-top:1px solid var(--line)}
+footer .big{font-size:clamp(22px,4vw,34px);font-weight:600;letter-spacing:-.5px;max-width:740px;line-height:1.3}
+footer .big b{color:var(--vital)}
+footer .links{margin-top:30px;display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+footer .links a{border:1px solid var(--line2);border-radius:6px;padding:11px 18px;color:var(--bone);
+  transition:all .2s;display:flex;align-items:center;gap:8px}
+footer .links a:hover{border-color:var(--vital);color:var(--vital);background:rgba(56,224,176,.06)}
+footer .sig{margin-top:40px;font-family:var(--mono);font-size:11px;color:var(--fog)}
+
+/* reveal on scroll */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}*{animation:none!important;scroll-behavior:auto}}
+
+/* ── SOC demo ───────────────────────────────────── */
+.soc{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--ink2)}
+.soc .schead{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--fog);flex-wrap:wrap}
+.soc .schead .live{display:flex;align-items:center;gap:7px;color:var(--vital)}
+.soc .schead .live i{width:7px;height:7px;border-radius:50%;background:var(--vital);box-shadow:0 0 8px var(--vital);animation:bp 2s infinite;font-style:normal}
+.soc .schead .count{margin-left:auto;color:var(--bone)}
+.soc .schead .count b{color:var(--crit)}
+.soc .query{padding:14px 16px;border-bottom:1px solid var(--line);background:#080d16}
+.soc .query .ql{font-family:var(--mono);font-size:11px;color:var(--fog);margin-bottom:8px;letter-spacing:1px}
+.soc .query code{display:block;font-family:var(--mono);font-size:13px;color:#cdd7e6;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.soc .query code .kw{color:#7aa2ff}
+.soc .query code .op{color:var(--pulse)}
+.soc .query code .str{color:var(--vital)}
+.soc .filters{display:flex;gap:8px;padding:13px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.soc .filters button{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--fog);
+  background:transparent;border:1px solid var(--line2);border-radius:5px;padding:7px 12px;cursor:pointer;
+  transition:all .18s}
+.soc .filters button:hover{border-color:var(--vital);color:var(--bone)}
+.soc .filters button.on{background:rgba(56,224,176,.12);border-color:var(--vital);color:var(--vital)}
+.soc .filters button:focus-visible{outline:2px solid var(--vital);outline-offset:2px}
+.soc .log{max-height:340px;overflow-y:auto;font-family:var(--mono);font-size:12px}
+.soc .row2{display:grid;grid-template-columns:74px 88px 1fr 92px;gap:0;padding:9px 16px;
+  border-bottom:1px solid #101a2b;align-items:center;animation:slideIn .3s ease-out}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}}
+.soc .row2 .t{color:var(--fog)}
+.soc .row2 .sev{font-weight:600;letter-spacing:.5px}
+.soc .row2 .sev.crit{color:var(--crit)}
+.soc .row2 .sev.high{color:var(--pulse)}
+.soc .row2 .sev.med{color:#7aa2ff}
+.soc .row2 .sev.low{color:var(--fog)}
+.soc .row2 .msg{color:#aeb9c9;padding:0 10px}
+.soc .row2 .src{color:var(--fog);text-align:right;font-size:11px}
+.soc .log::-webkit-scrollbar{width:8px}.soc .log::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.soc .empty{padding:28px 16px;text-align:center;color:var(--fog);font-family:var(--mono);font-size:12px}
+@media(max-width:560px){.soc .row2{grid-template-columns:60px 66px 1fr;}.soc .row2 .src{display:none}}
+
+/* ── ambient binary rain (subtle, behind everything) ── */
+#rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.18}
+body>*:not(#rain){position:relative;z-index:1}
+.bar{z-index:50!important}
+
+/* ── defend-and-contain overlay ─────────────────── */
+#contain{position:fixed;inset:0;z-index:200;pointer-events:none;display:none;
+  align-items:center;justify-content:center;flex-direction:column;
+  background:rgba(4,7,12,.0);font-family:var(--mono)}
+#contain.run{display:flex}
+#contain .scan{position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(56,224,176,.05) 0 2px,transparent 2px 4px);
+  opacity:0;animation:scanflick .5s steps(2) 2}
+@keyframes scanflick{0%,100%{opacity:0}50%{opacity:1}}
+#contain .box{text-align:center;padding:24px 30px;border:1px solid var(--line2);
+  background:rgba(7,11,18,.92);border-radius:8px;min-width:min(420px,86vw);
+  box-shadow:0 0 50px rgba(0,0,0,.6)}
+#contain .line{font-size:13px;letter-spacing:1px;margin:5px 0;opacity:0;color:var(--bone)}
+#contain .line.show{opacity:1}
+#contain .line .t{color:var(--fog)}
+#contain .line.alert{color:var(--crit)}
+#contain .line.alert .t{color:var(--crit)}
+#contain .line.ok{color:var(--vital)}
+#contain .bararea{height:6px;background:var(--line);border-radius:3px;margin:16px 0 6px;overflow:hidden;opacity:0;transition:opacity .2s}
+#contain .bararea.show{opacity:1}
+#contain .barfill{height:100%;width:0;background:var(--vital);box-shadow:0 0 10px var(--vital);
+  transition:width .55s cubic-bezier(.4,.1,.2,1)}
+#contain .verdict{font-size:16px;font-weight:600;letter-spacing:2px;color:var(--vital);
+  margin-top:14px;opacity:0;text-shadow:0 0 14px rgba(56,224,176,.6)}
+#contain .verdict.show{opacity:1;animation:verdictPop .3s ease-out}
+@keyframes verdictPop{from{transform:scale(.94)}}
+/* whole-page micro-glitch while sequence runs */
+@keyframes glitchShift{0%,100%{transform:translate(0)}20%{transform:translate(-2px,1px)}
+  40%{transform:translate(2px,-1px)}60%{transform:translate(-1px,0)}80%{transform:translate(1px,1px)}}
+body.glitching #rain,body.glitching .hero,body.glitching section{animation:glitchShift .18s steps(2) 3}
+@media(prefers-reduced-motion:reduce){
+  #contain .scan,body.glitching #rain,body.glitching .hero,body.glitching section{animation:none}
+  #rain{display:none}
+}
+
+/* ── KQL query panel (per dashboard) ─────────────── */
+.kql{border:1px solid var(--line);border-radius:10px;background:#080d16;overflow:hidden;margin-bottom:18px}
+.kql .kbar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:10.5px;color:var(--fog);letter-spacing:1px}
+.kql .kbar .tbl{color:var(--vital)}
+.kql .kbar .runtag{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--fog)}
+.kql .kbar .runtag.done{color:var(--vital)}
+.kql .kbar .runtag i{width:6px;height:6px;border-radius:50%;background:var(--fog);font-style:normal}
+.kql .kbar .runtag.done i{background:var(--vital);box-shadow:0 0 7px var(--vital)}
+.kql pre{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.75;
+  color:#cdd7e6;white-space:pre-wrap;word-break:break-word;min-height:5em}
+.kql pre .tbl2{color:var(--vital)}
+.kql pre .kw{color:#7aa2ff}
+.kql pre .op{color:var(--pulse)}
+.kql pre .str{color:#7fe0c0}
+.kql pre .fn{color:#c9a6ff}
+.kql .cursor{display:inline-block;width:7px;height:15px;background:var(--vital);
+  vertical-align:text-bottom;margin-left:1px;animation:cblink 1s steps(2) infinite}
+@keyframes cblink{50%{opacity:0}}
+.kql.done .cursor{display:none}
+.dash-results{opacity:0;max-height:0;overflow:hidden;transition:opacity .55s ease}
+.dash-results.run{opacity:1;max-height:none;overflow:visible}
+.rowcount{font-family:var(--mono);font-size:11px;color:var(--fog);margin:0 2px 12px;letter-spacing:1px}
+.rowcount b{color:var(--vital)}
+.bar .ws{font-family:var(--mono);font-size:10px;color:var(--fog);letter-spacing:2px;margin-right:4px}
+</style>
+<noscript><style>.dash-results{opacity:1!important;max-height:none!important;overflow:visible!important}.kql{display:none}.rv{opacity:1!important;transform:none!important}#rain{display:none}</style></noscript>
+</head>
+<body>
+
+<canvas id="rain" aria-hidden="true"></canvas>
+
+<div id="contain" aria-hidden="true">
+  <div class="scan"></div>
+  <div class="box" id="containBox"></div>
+</div>
+
+<div class="bar">
+  <span class="dot"></span>
+  <span class="id">JAKOB <b>// SENTINEL</b></span>
+  <span class="stat hide">WORKSPACE <b>jberentsen-prod</b></span>
+  <span class="stat hide">UPTIME <b id="uptime">—</b></span>
+  <span class="spacer"></span>
+  <nav>
+    <span class="ws">DASHBOARDS</span>
+    <a href="#systems">coverage</a>
+    <a href="#record">record</a>
+    <a href="#projects">builds</a>
+    <a href="#soc">triage</a>
+    <a href="#creds">certs</a>
+    <a href="#value">brief</a>
+  </nav>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="eyebrow">Security Engineer · Healthcare</div>
+  <h1>Security for systems<br><span class="l2">that can't go down.</span></h1>
+  <p class="lede">I'm a <b>security engineer</b> who secures the technology a hospital runs on — <b>endpoints, identity, network, and the SIEM that watches it all</b>. Full-stack defensive coverage, proven in an environment where downtime isn't an option. <b>This page is that work, monitored live.</b></p>
+
+  <div class="ecg rv">
+    <div class="ehead">
+      <span class="lab">● LEAD II</span>
+      <span>SUMMIT PACIFIC // FLOOR MONITOR</span>
+      <span class="rt mono" id="bpm">72 BPM</span>
+    </div>
+    <canvas id="ecgCanvas"></canvas>
+    <div class="efoot">
+      <div>STATUS<b class="v">NOMINAL</b></div>
+      <div>SYSTEMS<b>6 DOMAINS</b></div>
+      <div>SHIFT<b>NIGHT</b></div>
+      <div>ALERTS<b class="v">0 CRIT</b></div>
+    </div>
+  </div>
+
+  <div class="scrollcue mono"><span class="arr">↓</span> BEGIN ROUNDS</div>
+</header>
+
+<!-- SYSTEMS -->
+<section id="systems">
+  <div class="shead rv"><span class="num">01</span><h2>Security, end to end</h2></div>
+  <p class="sintro rv">The same coverage a security program needs — endpoint, identity, network, detection, vulnerability management, and governance — each one real work I own in production. Green is holding. Amber is active.</p>
+
+  <div class="kql rv" data-query="coverage">
+    <div class="kbar"><span class="tbl">SecurityCoverage</span><span>· custom table</span>
+      <span class="runtag"><i></i>READY</span></div>
+    <pre></pre>
+  </div>
+  <div class="dash-results" data-for="coverage">
+  <p class="rowcount"><b>6</b> domains returned</p>
+  <div class="grid">
+
+    <div class="node rv">
+      <div class="top"><span class="led"></span>DETECTION &amp; RESPONSE<span class="st ok">MONITORING</span></div>
+      <h3>SIEM & Log Correlation</h3>
+      <div class="sys mono">Microsoft Sentinel · KQL · multi-source audits</div>
+      <p>Run audits that correlate logs across Horizon event data, Imprivata, badge systems, and FortiAnalyzer, and write KQL to surface what matters in Sentinel. Pulling a clean signal out of scattered sources is the core of the work.</p>
+      <div class="tags"><span>SOC</span><span>KQL</span><span>log analysis</span></div>
+    </div>
+
+    <div class="node rv">
+      <div class="top"><span class="led"></span>VULNERABILITY MGMT<span class="st ok">REMEDIATED</span></div>
+      <h3>Vulnerability Management</h3>
+      <div class="sys mono">Rapid7 · AD CS · Qualys VMDR</div>
+      <p>Researched and implemented mitigations for Rapid7 penetration-test findings and eliminated critical Active Directory Certificate Services vulnerabilities — measurably improving the security posture of the environment.</p>
+      <div class="tags"><span>remediation</span><span>AD CS</span></div>
+    </div>
+
+    <div class="node rv">
+      <div class="top"><span class="led"></span>IDENTITY &amp; ACCESS<span class="st ok">AUTOMATED</span></div>
+      <h3>Identity & Access Management</h3>
+      <div class="sys mono">Active Directory · Galaxy access control</div>
+      <p>Built role-based provisioning tying badge and system access to AD security groups: new hires get the right access automatically, terminated accounts lose it the instant they're offboarded. Identity lifecycle that enforces itself.</p>
+      <div class="tags"><span>IAM</span><span>RBAC</span><span>automation</span></div>
+    </div>
+
+    <div class="node rv">
+      <div class="top"><span class="led"></span>GOVERNANCE<span class="st ok">AUDITED</span></div>
+      <h3>Audit & Investigations</h3>
+      <div class="sys mono">Microsoft Purview · eDiscovery · M365</div>
+      <p>Audit accounts and access through Microsoft Purview and participate in internal investigations — defensible collection and review handled cleanly, the part of security that has to hold up under scrutiny.</p>
+      <div class="tags"><span>compliance</span><span>investigations</span></div>
+    </div>
+
+    <div class="node rv">
+      <div class="top"><span class="led"></span>ENDPOINT<span class="st ok">HARDENED</span></div>
+      <h3>Endpoint Security</h3>
+      <div class="sys mono">10ZiG thin clients · GE MAC 7 · medical devices</div>
+      <p>Standardize and harden 10ZiG endpoint templates so every deployed device is secure and consistent, and lock down medical devices — Technician-ID auth, idle lockouts, and compensating-control documentation where they can't meet the standard natively.</p>
+      <div class="tags"><span>hardening</span><span>device security</span></div>
+    </div>
+
+    <div class="node rv">
+      <div class="top"><span class="led"></span>NETWORK<span class="st ok">HA PAIR</span></div>
+      <h3>Network Security</h3>
+      <div class="sys mono">FortiGate 100F HA · FortiAnalyzer · Azure</div>
+      <p>Own the firewall HA pair and edge, pull forensic detail from FortiAnalyzer, and work across Azure and M365 daily. Turning "the network is slow" into an actual diagnosis is a security skill before it's a networking one.</p>
+      <div class="tags"><span>firewall</span><span>cloud</span><span>triage</span></div>
+    </div>
+
+  </div>
+  </div>
+</section>
+
+<!-- RECORD -->
+<section id="record">
+  <div class="shead rv"><span class="num">02</span><h2>Service record</h2></div>
+  <p class="sintro rv">The same floor, walked longer. A pattern of taking senior-scope work without waiting for the title to catch up.</p>
+  <div class="kql rv" data-query="record">
+    <div class="kbar"><span class="tbl">EmploymentEvent</span><span>· custom table</span>
+      <span class="runtag"><i></i>READY</span></div>
+    <pre></pre>
+  </div>
+  <div class="dash-results" data-for="record">
+  <p class="rowcount"><b>5</b> events · ordered desc</p>
+  <div class="tl">
+    <div class="row now rv">
+      <div class="when">JUL 2025 — PRESENT</div>
+      <div class="role">Clinical Systems Specialist</div>
+      <div class="org mono">Summit Pacific Medical Center · Elma, WA</div>
+      <div class="desc">Administer and secure clinical-based technology for a critical-access hospital: device hardening, change control, identity and access systems, vulnerability remediation, and the internal tooling that didn't exist yet. Liaison between technical teams and clinical staff.</div>
+    </div>
+    <div class="row rv">
+      <div class="when">OCT 2024 — JUL 2025</div>
+      <div class="role">IT System Coordinator</div>
+      <div class="org mono">Summit Pacific Medical Center</div>
+      <div class="desc">Same building, earlier chapter. Built out Mindray telemetry and Vocera, remediated Rapid7 and AD CS findings, and designed the AD-to-Galaxy badge integration that auto-provisions new hires and revokes terminated access by security group.</div>
+    </div>
+    <div class="row rv">
+      <div class="when">JAN 2023 — NOV 2024</div>
+      <div class="role">IT Lead Technician & Security Specialist</div>
+      <div class="org mono">Twin Harbor Technology Solutions</div>
+      <div class="desc">Ran SIEM and email security, firewall installs, and Fortinet switch/AP deployments across clients. Built risk assessments and incident response plans and drove PCI DSS compliance.</div>
+    </div>
+    <div class="row rv">
+      <div class="when">APR 2024 — OCT 2024</div>
+      <div class="role">Cybersecurity Support Engineer · Intern</div>
+      <div class="org mono">Log(N) Pacific</div>
+      <div class="desc">Hardened Azure with Private Link, NSGs, and Defender for Cloud against NIST 800-53, PCI DSS, and HIPAA/HITRUST, and wrote KQL to power new Sentinel dashboards.</div>
+    </div>
+    <div class="row rv">
+      <div class="when">IN PROGRESS</div>
+      <div class="role">M.S. Cybersecurity & Information Assurance</div>
+      <div class="org mono">Western Governors University · on a B.S. in Computer Science</div>
+      <div class="desc">Formalizing on paper what the day job already proves in practice.</div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- CREDENTIALS -->
+<section id="creds">
+  <div class="shead rv"><span class="num">03</span><h2>Credentials & loadout</h2></div>
+  <p class="sintro rv">Certifications and the working toolset. Amber items are in progress.</p>
+  <div class="kql rv" data-query="certs">
+    <div class="kbar"><span class="tbl">Certification</span><span>· custom table</span>
+      <span class="runtag"><i></i>READY</span></div>
+    <pre></pre>
+  </div>
+  <div class="dash-results" data-for="certs">
+  <p class="rowcount"><b>12</b> rows · grouped by status</p>
+  <div class="creds rv">
+    <div class="cred"><div class="k">DEGREE</div><div class="v">B.S. Computer Science</div></div>
+    <div class="cred"><div class="k">DEGREE</div><div class="v prog">M.S. Cybersecurity</div></div>
+    <div class="cred"><div class="k">CERT</div><div class="v">CompTIA Security+</div></div>
+    <div class="cred"><div class="k">CERT</div><div class="v prog">CompTIA Network+</div></div>
+    <div class="cred"><div class="k">CERT</div><div class="v">CompTIA Project+</div></div>
+    <div class="cred"><div class="k">CERT</div><div class="v">ITIL 4 Foundations</div></div>
+    <div class="cred"><div class="k">CERT</div><div class="v">Digital Forensics (EC-Council)</div></div>
+    <div class="cred"><div class="k">CERT</div><div class="v">Qualys VMDR</div></div>
+    <div class="cred"><div class="k">SECURITY</div><div class="v">Sentinel · KQL · NIST 800-53</div></div>
+    <div class="cred"><div class="k">CLINICAL</div><div class="v">Mindray · Vocera · Galaxy</div></div>
+    <div class="cred"><div class="k">NETWORK</div><div class="v">Fortinet · Active Directory</div></div>
+    <div class="cred"><div class="k">BUILD</div><div class="v">Python · Java · SQL · PowerShell</div></div>
+  </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="shead rv"><span class="num">04</span><h2>Things I've built</h2></div>
+  <p class="sintro rv">Shipped code, not just coursework. Each one links to the repository.</p>
+  <div class="kql rv" data-query="builds">
+    <div class="kbar"><span class="tbl">RepoActivity</span><span>· custom table</span>
+      <span class="runtag"><i></i>READY</span></div>
+    <pre></pre>
+  </div>
+  <div class="dash-results" data-for="builds">
+  <p class="rowcount"><b>5</b> repos · sorted by category</p>
+  <div class="tracks">
+    <a class="track rv" href="https://github.com/JohnnyHackz/Azure-SOC" target="_blank" rel="noopener"><div class="tn mono">SECURITY ↗</div><h4>SOC + Honeynet in Azure</h4><p>Stood up a live honeynet and security operations center — Azure VMs feeding Microsoft Sentinel, with Log Analytics surfacing real attack telemetry.</p></a>
+    <a class="track rv" href="https://github.com/JohnnyHackz/Capstone_Project" target="_blank" rel="noopener"><div class="tn mono">AI/ML ↗</div><h4>Machine Learning Capstone</h4><p>End-to-end ML pipeline in Python — data analysis, SQL, and scikit-learn models built and evaluated in Jupyter.</p></a>
+    <a class="track rv" href="https://github.com/JohnnyHackz/C950_Project" target="_blank" rel="noopener"><div class="tn mono">ALGORITHMS ↗</div><h4>Package Delivery Router</h4><p>A delivery-routing engine built on hand-implemented data structures and algorithms in Python.</p></a>
+    <a class="track rv" href="https://github.com/JohnnyHackz/Inventory_Management_System" target="_blank" rel="noopener"><div class="tn mono">SOFTWARE ↗</div><h4>Inventory Management System</h4><p>A full JavaFX desktop application — data management, software design, and a complete UI.</p></a>
+    <div class="track rv"><div class="tn mono">INTERNAL TOOL</div><h4>Badge Printing App</h4><p>An Electron desktop app I built to replace a paid badge-printing license — same output, zero license cost. It prints every new hire's first badge and still runs in production.</p></div>
+  </div>
+  </div>
+</section>
+
+<!-- SOC DEMO -->
+<section id="soc">
+  <div class="shead rv"><span class="num">05</span><h2>Live triage</h2></div>
+  <p class="sintro rv">A working slice of the SIEM work I do — sample security events streaming in, filtered the way I'd scope a real Sentinel hunt. Tap a severity to filter. The KQL above is the query driving it.</p>
+  <div class="soc rv">
+    <div class="schead">
+      <span class="live"><i></i>STREAMING</span>
+      <span>SENTINEL // SAMPLE WORKSPACE</span>
+      <span class="count">SHOWN <b id="socCount">0</b></span>
+    </div>
+    <div class="query">
+      <div class="ql">// ACTIVE QUERY</div>
+      <code><span class="kw">SecurityEvent</span>
+| <span class="kw">where</span> TimeGenerated <span class="op">></span> ago(<span class="str">1h</span>)
+| <span class="kw">where</span> Severity <span class="kw">in</span> (<span class="str" id="qSev">"Critical","High","Medium","Low"</span>)
+| <span class="kw">project</span> TimeGenerated, Severity, Activity, Source
+| <span class="kw">order by</span> TimeGenerated <span class="kw">desc</span></code>
+    </div>
+    <div class="filters" id="socFilters">
+      <button class="on" data-sev="all">ALL</button>
+      <button data-sev="Critical">CRITICAL</button>
+      <button data-sev="High">HIGH</button>
+      <button data-sev="Medium">MEDIUM</button>
+      <button data-sev="Low">LOW</button>
+    </div>
+    <div class="log" id="socLog"></div>
+  </div>
+</section>
+
+<!-- VALUE -->
+<section id="value">
+  <div class="shead rv"><span class="num">06</span><h2>Where I add value</h2></div>
+  <p class="sintro rv">I'm targeting security operations, ISSO, and vulnerability-management roles. Here's what I bring that a narrower candidate can't.</p>
+  <div class="tracks">
+    <div class="track rv"><div class="tn mono">DETECTION</div><h4>SOC & Detection</h4><p>Hands-on Sentinel and KQL, correlating logs across Horizon, Imprivata, badge systems, and FortiAnalyzer. I've done real multi-source audits, not lab exercises.</p></div>
+    <div class="track rv"><div class="tn mono">VULN MGMT</div><h4>Vulnerability Management</h4><p>Rapid7 and Qualys findings worked end to end — including eliminating critical AD CS vulnerabilities. I close findings, not just report them.</p></div>
+    <div class="track rv"><div class="tn mono">GRC / ISSO</div><h4>Governance & Audit</h4><p>IAM, Purview audits, investigations, HIPAA, and change control. The breadth ISSO work actually demands — and I've operated across all of it in production.</p></div>
+    <div class="track rv"><div class="tn mono">DIFFERENTIATOR</div><h4>Healthcare & OT Depth</h4><p>I secure medical devices and clinical systems most security teams treat as a black box. That domain context is a hard-to-hire edge, and I live in it daily.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div class="big rv">A critical-access hospital gave me a rare view: telemetry, clinical devices, identity, and badge workflows that most engineers never touch. <b>I keep the lights on — and build what's missing while I'm at it.</b></div>
+  <div class="links rv">
+    <a href="mailto:berentsenjakob@gmail.com">✉ berentsenjakob@gmail.com</a>
+    <a href="https://www.linkedin.com/in/jakob-berentsen" target="_blank" rel="noopener">↗ LinkedIn</a>
+    <a href="https://github.com/JohnnyHackz" target="_blank" rel="noopener">↗ GitHub</a>
+    <a href="resume.pdf" target="_blank" rel="noopener">↗ Résumé (PDF)</a>
+  </div>
+  <div class="sig mono rv">SUMMIT PACIFIC // NIGHT MONITOR · STATUS NOMINAL · ALL NODES ONLINE</div>
+</footer>
+
+<script>
+/* ── live ECG waveform ───────────────────────────── */
+(function(){
+  const cv=document.getElementById('ecgCanvas');
+  const ctx=cv.getContext('2d');
+  let W,H,dpr;
+  function size(){
+    dpr=Math.min(2,window.devicePixelRatio||1);
+    W=cv.clientWidth;H=120;
+    cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  size();addEventListener('resize',size);
+
+  // one PQRST heartbeat as a function of phase 0..1
+  function beat(p){
+    const g=(x,c,w,a)=>a*Math.exp(-((x-c)**2)/(2*w*w));
+    let y=0;
+    y+=g(p,0.18,0.022,0.13);   // P
+    y-=g(p,0.30,0.011,0.10);   // Q
+    y+=g(p,0.33,0.010,1.00);   // R spike
+    y-=g(p,0.37,0.014,0.28);   // S
+    y+=g(p,0.58,0.040,0.32);   // T
+    return y;
+  }
+  let trail=[];const maxPts=()=>Math.floor(W);
+  let phase=0;const speed=0.0016;
+  const mid=H*0.62, amp=H*0.42;
+  let last=performance.now();
+
+  function frame(now){
+    const dt=Math.min(40,now-last);last=now;
+    phase=(phase+speed*dt)%1;
+    trail.push(mid - beat(phase)*amp);
+    while(trail.length>maxPts())trail.shift();
+
+    ctx.clearRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle='rgba(56,224,176,0.05)';ctx.lineWidth=1;
+    for(let x=0;x<W;x+=22){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // trace
+    ctx.beginPath();
+    for(let i=0;i<trail.length;i++){i?ctx.lineTo(i,trail[i]):ctx.moveTo(i,trail[i]);}
+    ctx.strokeStyle='#38e0b0';ctx.lineWidth=2;
+    ctx.shadowColor='#38e0b0';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+    // leading dot
+    if(trail.length){
+      const x=trail.length-1,y=trail[x];
+      ctx.beginPath();ctx.arc(x,y,2.6,0,7);ctx.fillStyle='#eafff8';ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // wandering BPM readout
+  const bpmEl=document.getElementById('bpm');
+  setInterval(()=>{const b=68+Math.floor(Math.random()*9);bpmEl.textContent=b+' BPM';},2200);
+})();
+
+/* ── uptime counter (since "shift start") ────────── */
+(function(){
+  const el=document.getElementById('uptime');if(!el)return;
+  const start=Date.now();
+  setInterval(()=>{
+    const s=Math.floor((Date.now()-start)/1000);
+    const hh=String(Math.floor(s/3600)).padStart(2,'0');
+    const mm=String(Math.floor(s/60)%60).padStart(2,'0');
+    const ss=String(s%60).padStart(2,'0');
+    el.textContent=`${hh}:${mm}:${ss}`;
+  },1000);
+})();
+
+/* ── ambient binary rain (subtle) ────────────────── */
+(function(){
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const cv=document.getElementById('rain');if(!cv||reduce)return;
+  const ctx=cv.getContext('2d');
+  let W,H,cols,drops,font=15;
+  function size(){
+    W=cv.width=innerWidth;H=cv.height=innerHeight;
+    cols=Math.floor(W/font);
+    drops=new Array(cols).fill(0).map(()=>Math.random()*-H/font);
+  }
+  size();addEventListener('resize',size);
+  ctx.textBaseline='top';
+  let last=0;
+  function draw(now){
+    if(now-last>55){ // a touch faster than before
+      last=now;
+      ctx.fillStyle='rgba(7,11,18,0.14)'; // lighter fade = longer, brighter trails
+      ctx.fillRect(0,0,W,H);
+      ctx.font=font+"px 'IBM Plex Mono',monospace";
+      for(let i=0;i<cols;i++){
+        const ch=Math.random()<.5?'0':'1';
+        const x=i*font, y=drops[i]*font;
+        // bright leading glyph
+        ctx.fillStyle='rgba(120,255,214,0.95)';
+        ctx.fillText(ch,x,y);
+        // dimmer second glyph for depth
+        ctx.fillStyle='rgba(56,224,176,0.45)';
+        ctx.fillText(Math.random()<.5?'0':'1',x,y-font);
+        if(y>H&&Math.random()>.965)drops[i]=Math.random()*-20;
+        drops[i]+=1;
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+/* ── intrusion sequence: defend (internal) + secure-channel (outbound) ── */
+(function(){
+  const overlay=document.getElementById('contain');
+  const box=document.getElementById('containBox');
+  if(!overlay||!box)return;
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  let running=false;
+
+  // two scripts: same intrusion theater, verdict fits the action
+  const SCRIPTS={
+    internal:{
+      lines:[
+        {cls:'',   t:'[ ] ', txt:'inbound request intercepted', tail:' · port 443'},
+        {cls:'alert',t:'[!] ',txt:'ANOMALY DETECTED · unauthorized traversal'},
+        {cls:'',   t:'[ ] ', txt:'isolating session · spinning up countermeasures'},
+      ],
+      resolve:{cls:'ok', t:'[✓] ', txt:'threat contained · integrity verified'},
+      verdict:'ACCESS GRANTED'
+    },
+    outbound:{
+      lines:[
+        {cls:'',   t:'[ ] ', txt:'outbound request flagged', tail:' · external host'},
+        {cls:'alert',t:'[!] ',txt:'PERIMETER BREACH · unverified destination'},
+        {cls:'',   t:'[ ] ', txt:'negotiating TLS · establishing secure channel'},
+      ],
+      resolve:{cls:'ok', t:'[✓] ', txt:'channel encrypted · destination trusted'},
+      verdict:'CONNECTION AUTHORIZED'
+    }
+  };
+
+  function build(s){
+    box.innerHTML='';
+    const made=[];
+    s.lines.forEach(l=>{
+      const d=document.createElement('div');
+      d.className='line '+l.cls;
+      d.innerHTML=`<span class="t">${l.t}</span>${l.txt}`+(l.tail?`<span class="t">${l.tail}</span>`:'');
+      box.appendChild(d);made.push(d);
+    });
+    const bar=document.createElement('div');bar.className='bararea';
+    const fill=document.createElement('div');fill.className='barfill';
+    bar.appendChild(fill);box.appendChild(bar);
+    const res=document.createElement('div');
+    res.className='line '+s.resolve.cls;
+    res.innerHTML=`<span class="t">${s.resolve.t}</span>${s.resolve.txt}`;
+    box.appendChild(res);made.push(res);
+    const v=document.createElement('div');v.className='verdict';v.textContent=s.verdict;
+    box.appendChild(v);
+    return {lines:made,bar,fill,verdict:v};
+  }
+
+  function run(kind,done){
+    if(running){done&&done();return;}
+    running=true;
+    if(reduce){running=false;done&&done();return;} // skip theater
+    const s=SCRIPTS[kind];
+    const el=build(s);
+    overlay.classList.add('run');
+    document.body.classList.add('glitching');
+    // lines are: [0,1,2] intro, then [3]=resolve in el.lines index 3
+    const L=el.lines;
+    const seq=[
+      [120, ()=>L[0].classList.add('show')],
+      [360, ()=>L[1].classList.add('show')],
+      [720, ()=>{L[2].classList.add('show');el.bar.classList.add('show');
+                 requestAnimationFrame(()=>el.fill.style.width='100%');}],
+      [1320,()=>document.body.classList.remove('glitching')],
+      [1360,()=>L[3].classList.add('show')],
+      [1620,()=>el.verdict.classList.add('show')],
+      [2150,()=>{overlay.classList.remove('run');running=false;done&&done();}],
+    ];
+    seq.forEach(([t,fn])=>setTimeout(fn,t));
+  }
+
+  // in-page nav → internal defend, then smooth-scroll
+  document.querySelectorAll('.bar nav a[href^="#"]').forEach(a=>{
+    a.addEventListener('click',e=>{
+      const href=a.getAttribute('href');
+      if(href&&href.length>1){
+        e.preventDefault();
+        run('internal',()=>{
+          const el=document.querySelector(href);
+          if(el)el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+        });
+      }
+    });
+  });
+
+  // outbound links (http/mailto) → secure-channel, then open
+  document.querySelectorAll('a[href^="http"], a[href^="mailto"]').forEach(a=>{
+    // skip links inside the top bar nav (those are in-page) — already handled above
+    a.addEventListener('click',e=>{
+      const href=a.getAttribute('href');
+      if(!href)return;
+      const newTab=a.target==='_blank';
+      e.preventDefault();
+      run('outbound',()=>{
+        if(href.startsWith('mailto')){window.location.href=href;}
+        else if(newTab){window.open(href,'_blank','noopener');}
+        else{window.location.href=href;}
+      });
+    });
+  });
+})();
+
+
+/* ── KQL dashboards: type query, then render results ── */
+(function(){
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  // each query as plain text; highlighting applied after typing
+  const QUERIES={
+    coverage:
+`SecurityCoverage
+| where Environment == "Summit Pacific"
+| summarize Controls = count() by Domain, Status
+| project Domain, Status, Controls
+| order by Domain asc`,
+    record:
+`EmploymentEvent
+| where Actor == "Jakob Berentsen"
+| where EventType in ("Role", "Education")
+| project TimeGenerated, Title, Org, Detail
+| order by TimeGenerated desc`,
+    builds:
+`RepoActivity
+| where Owner == "JohnnyHackz"
+| where Visibility == "Public" or Type == "Internal Tool"
+| project Name, Stack, Category, Url
+| sort by Category asc`,
+    certs:
+`Certification
+| where Holder == "Jakob Berentsen"
+| summarize by Name, Category, Status
+| order by Status asc, Category asc`
+  };
+
+  // KQL syntax highlighter — tokenize so replacements don't collide
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  const KWSET=new Set(['where','summarize','project','order','sort','by','and','or','asc','desc','in']);
+  function highlight(txt){
+    const lines=txt.split('\n');
+    return lines.map((line,li)=>{
+      let out='';
+      // split into tokens preserving strings
+      const parts=line.split(/("[^"]*")/);
+      parts.forEach(part=>{
+        if(part.startsWith('"')&&part.endsWith('"')){
+          out+='<span class="str">'+esc(part)+'</span>';return;
+        }
+        // tokenize words/operators/whitespace
+        part.replace(/(\s+|[A-Za-z_][A-Za-z0-9_]*|==|=|\||\(|\)|,|\d+)/g,(tok)=>{
+          if(/^\s+$/.test(tok)){out+=tok;}
+          else if(li===0&&/^[A-Za-z_]+$/.test(tok)&&out.replace(/\s/g,'')===''){
+            out+='<span class="tbl2">'+tok+'</span>'; // table name = first token line 1
+          }
+          else if(tok==='count'){out+='<span class="fn">count</span>';}
+          else if(KWSET.has(tok)){out+='<span class="kw">'+tok+'</span>';}
+          else if(tok==='=='||tok==='='||tok==='|'){out+='<span class="op">'+esc(tok)+'</span>';}
+          else{out+=esc(tok);}
+          return tok;
+        });
+      });
+      return out;
+    }).join('\n');
+  }
+
+  function typeInto(panel,done){
+    const pre=panel.querySelector('pre');
+    const tag=panel.querySelector('.runtag');
+    const key=panel.dataset.query;
+    const txt=QUERIES[key];
+    if(!txt){done&&done();return;}
+    if(reduce){ // no typing; show instantly
+      pre.innerHTML=highlight(txt);panel.classList.add('done');
+      tag.classList.add('done');tag.innerHTML='<i></i>'+rows(key)+' ROWS';
+      done&&done();return;
+    }
+    let i=0;
+    tag.innerHTML='<i></i>RUNNING';
+    (function step(){
+      i++;
+      const slice=txt.slice(0,i);
+      pre.innerHTML=highlight(slice)+'<span class="cursor"></span>';
+      if(i<txt.length){
+        // vary speed slightly for a human feel; newlines pause
+        const ch=txt[i-1];
+        const d=ch==='\n'?90:(ch===' '?14:22+Math.random()*30);
+        setTimeout(step,d);
+      } else {
+        panel.classList.add('done');
+        tag.classList.add('done');
+        tag.innerHTML='<i></i>'+rows(key)+' ROWS · '+(8+Math.floor(Math.random()*40))+'ms';
+        done&&done();
+      }
+    })();
+  }
+  function rows(key){return ({coverage:6,record:5,builds:5,certs:12})[key]||0;}
+
+  // reveal the matching results block
+  function reveal(key){
+    const res=document.querySelector('.dash-results[data-for="'+key+'"]');
+    if(res)res.classList.add('run');
+  }
+
+  // run each dashboard's query the first time it scrolls into view
+  const seen=new Set();
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting)return;
+      const panel=e.target;const key=panel.dataset.query;
+      if(seen.has(key))return;seen.add(key);
+      io.unobserve(panel);
+      typeInto(panel,()=>setTimeout(()=>reveal(key),180));
+    });
+  },{threshold:.45});
+  document.querySelectorAll('.kql[data-query]').forEach(p=>{
+    // results hidden until query runs
+    io.observe(p);
+  });
+})();
+
+/* ── scroll reveal ───────────────────────────────── */
+(function(){
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.12});
+  document.querySelectorAll('.rv').forEach((el,i)=>{
+    el.style.transitionDelay=(Math.min(i%6,5)*60)+'ms';io.observe(el);
+  });
+})();
+
+/* ── SOC live-triage demo ────────────────────────── */
+(function(){
+  const logEl=document.getElementById('socLog');
+  const countEl=document.getElementById('socCount');
+  const qSev=document.getElementById('qSev');
+  const filters=document.getElementById('socFilters');
+  if(!logEl)return;
+
+  // sample event templates — realistic but entirely synthetic
+  const EVENTS=[
+    ['Critical','Multiple failed Kerberos pre-auth then success','AD-DC-01'],
+    ['Critical','AD CS template allows client-supplied SAN (ESC1)','PKI-CA-02'],
+    ['High','Impossible-travel sign-in flagged','AzureAD'],
+    ['High','PowerShell encoded command on clinical VLAN','WS-RAD-114'],
+    ['High','Firewall HA failover event','FG-100F-A'],
+    ['Medium','New device enrolled outside change window','Intune'],
+    ['Medium','Telemetry endpoint dropped WLAN association','MINDRAY-13'],
+    ['Medium','Service account password near expiry','AD-DC-01'],
+    ['Low','Badge access granted by AD group sync','GALAXY-ACS'],
+    ['Low','Vocera firmware health check passed','VOCERA-CS'],
+    ['Low','Scheduled Qualys scan completed','QUALYS-VMDR'],
+    ['High','Defender flagged LSASS access attempt','WS-PHARM-07'],
+    ['Medium','Sentinel analytics rule updated','SENTINEL'],
+    ['Low','Backup job verified','VEEAM-01'],
+  ];
+  let active='all', rows=[], n=0;
+  const pad=x=>String(x).padStart(2,'0');
+  function stamp(){const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());}
+
+  function severityClass(s){return s.toLowerCase();}
+
+  function render(){
+    const shown=rows.filter(r=>active==='all'||r.sev===active);
+    countEl.textContent=shown.length;
+    if(!shown.length){logEl.innerHTML='<div class="empty">No events match this severity in the current window.</div>';return;}
+    logEl.innerHTML=shown.slice(0,40).map(r=>
+      `<div class="row2"><span class="t">${r.t}</span>`+
+      `<span class="sev ${severityClass(r.sev)}">${r.sev.toUpperCase()}</span>`+
+      `<span class="msg">${r.msg}</span>`+
+      `<span class="src">${r.src}</span></div>`).join('');
+  }
+
+  function emit(){
+    const e=EVENTS[Math.floor(Math.random()*EVENTS.length)];
+    rows.unshift({t:stamp(),sev:e[0],msg:e[1],src:e[2]});
+    if(rows.length>60)rows.pop();
+    render();
+  }
+
+  // seed a few so it's never empty on first view
+  for(let i=0;i<6;i++)emit();
+
+  // filter buttons
+  filters.addEventListener('click',ev=>{
+    const b=ev.target.closest('button');if(!b)return;
+    active=b.dataset.sev;
+    [...filters.children].forEach(x=>x.classList.toggle('on',x===b));
+    qSev.textContent= active==='all'
+      ? '"Critical","High","Medium","Low"'
+      : '"'+active+'"';
+    render();
+  });
+
+  // stream only while the section is visible (saves cycles, respects battery)
+  let timer=null;
+  const vis=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting&&!timer){timer=setInterval(emit, 2600);}
+      else if(!e.isIntersecting&&timer){clearInterval(timer);timer=null;}
+    });
+  },{threshold:.15});
+  vis.observe(document.getElementById('soc'));
+})();
+</script>
+</body>
+</html>
