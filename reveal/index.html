@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tic Tac Toe Reveal</title>
+<meta name="description" content="Pick a guess, then flip the gold squares until three in a row reveals boy or girl.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tic Tac Toe Reveal">
+<meta property="og:description" content="Pick a guess, then flip the gold squares until three in a row reveals boy or girl.">
+<meta property="og:url" content="https://jakobberentsen.com/reveal/">
+<meta property="og:image" content="https://jakobberentsen.com/reveal/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tic tac toe, give me a boy or a girl, above nine face-down gold squares">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#b3bdc8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23efe8d3%22/%3E%3Cstop%20offset%3D%22.3%22%20stop-color%3D%22%23c9bb93%22/%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23f8f4e6%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23c9bb93%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%2256%22%20height%3D%2256%22%20rx%3D%224%22%20fill%3D%22url%28%23g%29%22/%3E%3Ctext%20x%3D%2232%22%20y%3D%2246%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%20Rounded%20MT%20Bold%2CArial%2Csans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2240%22%20fill%3D%22%238a7440%22%20fill-opacity%3D%22.55%22%3E%3F%3C/text%3E%3C/svg%3E">
+<style>
+/* Base reset (the Claude artifact host supplied this before) */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: the page is the nursery wall. Cardstock banner taped up top, a foil board hung on two hooks below, tallies under it. */
+:root {
+  --wall: #b3bdc8;
+  --wall-low: #a7b2be;
+  --trim: #f2f3f1;
+  --trim-edge: #d7dbde;
+  --text: #1c232b;
+  --text-soft: #3b4652;
+  --pink: #f2a39d;
+  --teal: #8dbfb5;
+  --vinyl: #141414;
+  --bunny: #c2185b;
+  --bear: #5fbcd9;
+  --foil-a: #efe8d3;
+  --foil-b: #c9bb93;
+  --foil-c: #f8f4e6;
+  --foil-cut: #e3dcc6;
+  --foil-mark: rgba(122, 100, 48, 0.34);
+  --tape: rgba(255, 255, 255, 0.55);
+  --hook-pad: rgba(255, 255, 255, 0.4);
+  --metal: #8d959e;
+  --shadow: rgba(28, 38, 52, 0.28);
+  --scrim: rgba(40, 48, 60, 0.55);
+  --btn-bg: #1c232b;
+  --btn-fg: #f2f3f1;
+  --focus: #173f73;
+  --flash: rgba(255, 255, 255, 0.95);
+  --flash-soft: rgba(255, 255, 255, 0.4);
+
+  --font-display: "Fredoka", "Baloo 2", "Arial Rounded MT Bold", ui-rounded, system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --cw: clamp(24px, 8.2vw, 52px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --wall: #27303a; --wall-low: #212831; --trim: #3a434e; --trim-edge: #2e3640;
+    --text: #e8edf3; --text-soft: #b3bdc9;
+    --pink: #e3958f; --teal: #7fb0a7; --vinyl: #141414; --bunny: #d42a6c; --bear: #62bedb;
+    --foil-a: #e2d9bf; --foil-b: #b3a47b; --foil-c: #efe8d2; --foil-cut: #d6ceb4; --foil-mark: rgba(96, 78, 34, 0.4);
+    --tape: rgba(255, 255, 255, 0.24); --hook-pad: rgba(255, 255, 255, 0.12); --metal: #a3abb4;
+    --shadow: rgba(0, 0, 0, 0.5); --scrim: rgba(10, 14, 20, 0.7);
+    --btn-bg: #e8edf3; --btn-fg: #1c232b; --focus: #9fcbff;
+    --flash: rgba(255, 255, 255, 0.75); --flash-soft: rgba(255, 255, 255, 0.2);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --wall: #27303a; --wall-low: #212831; --trim: #3a434e; --trim-edge: #2e3640;
+  --text: #e8edf3; --text-soft: #b3bdc9;
+  --pink: #e3958f; --teal: #7fb0a7; --vinyl: #141414; --bunny: #d42a6c; --bear: #62bedb;
+  --foil-a: #e2d9bf; --foil-b: #b3a47b; --foil-c: #efe8d2; --foil-cut: #d6ceb4; --foil-mark: rgba(96, 78, 34, 0.4);
+  --tape: rgba(255, 255, 255, 0.24); --hook-pad: rgba(255, 255, 255, 0.12); --metal: #a3abb4;
+  --shadow: rgba(0, 0, 0, 0.5); --scrim: rgba(10, 14, 20, 0.7);
+  --btn-bg: #e8edf3; --btn-fg: #1c232b; --focus: #9fcbff;
+  --flash: rgba(255, 255, 255, 0.75); --flash-soft: rgba(255, 255, 255, 0.2);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--wall);
+  color: var(--text);
+  font: 400 16px/1.5 var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.trim {
+  height: 18px;
+  background: var(--trim);
+  border-bottom: 5px solid var(--trim-edge);
+  box-shadow: 0 3px 6px var(--shadow);
+}
+
+.wall {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 28px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+}
+
+/* ---------- cardstock letters ---------- */
+.banner { margin: 0; display: flex; flex-direction: column; align-items: center; gap: calc(var(--cw) * 0.28); }
+.row { display: flex; justify-content: center; gap: calc(var(--cw) * 0.36); }
+.word { display: flex; gap: 2px; }
+.card {
+  position: relative;
+  width: var(--cw);
+  aspect-ratio: 3 / 4;
+  display: grid;
+  place-items: center;
+  background: var(--pink);
+  color: var(--vinyl);
+  font: 700 calc(var(--cw) * 0.66) / 1 var(--font-display);
+  box-shadow: 0 1px 2px var(--shadow), 0 3px 8px -4px var(--shadow);
+  transform: rotate(var(--r, 0deg));
+}
+.card.t { background: var(--teal); }
+.card::before {
+  content: "";
+  position: absolute;
+  top: -6%;
+  left: 28%;
+  width: 44%;
+  height: 11%;
+  background: var(--tape);
+  transform: rotate(-2deg);
+}
+.card svg { width: 72%; height: 72%; overflow: visible; }
+.card svg * { fill: none; stroke: var(--vinyl); stroke-width: 4.4; stroke-linecap: round; stroke-linejoin: round; }
+
+.how {
+  margin: -6px 0 0;
+  max-width: 34ch;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 1rem;
+  text-wrap: balance;
+}
+
+/* ---------- guess ---------- */
+.guess { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.label {
+  margin: 0;
+  font: 600 0.78rem/1 var(--font-body);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+.picks { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+.pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 132px;
+  padding: 9px 18px 9px 9px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--teal);
+  color: var(--vinyl);
+  font: 600 1.3rem/1 var(--font-display);
+  box-shadow: 0 1px 2px var(--shadow), 0 6px 14px -8px var(--shadow);
+  transform: rotate(-1.2deg);
+  transition: transform 0.18s ease, opacity 0.2s ease;
+}
+.pick.girl { background: var(--pink); transform: rotate(1.1deg); }
+.pick:hover:not(:disabled) { transform: rotate(0deg) translateY(-2px); }
+.pick[aria-pressed="true"] { outline: 3px solid var(--text); outline-offset: 4px; transform: rotate(0deg); }
+.pick:disabled { cursor: default; }
+.pick:disabled:not([aria-pressed="true"]) { opacity: 0.45; }
+.pick .mini { width: 46px; height: 46px; }
+.guess-note { margin: 0; min-height: 1.5em; font-size: 0.95rem; color: var(--text-soft); text-align: center; }
+.guess.nudge .picks { animation: nudge 0.45s ease; }
+@keyframes nudge { 20%, 60% { transform: translateX(-7px); } 40%, 80% { transform: translateX(7px); } }
+
+/* ---------- foil ---------- */
+.foil {
+  background:
+    repeating-linear-gradient(33deg, rgba(0, 0, 0, 0.028) 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(-58deg, rgba(255, 255, 255, 0.16) 0 3px, transparent 3px 11px),
+    linear-gradient(140deg, var(--foil-a) 0%, var(--foil-b) 28%, var(--foil-c) 50%, var(--foil-b) 74%, var(--foil-a) 100%);
+}
+.mini { display: grid; place-items: center; border-radius: 1px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); }
+.mini svg { width: 82%; height: 82%; }
+
+/* ---------- board ---------- */
+.board-wrap { width: min(100%, 400px); display: flex; flex-direction: column; gap: 6px; }
+.hooks { display: flex; justify-content: space-between; padding-inline: 20%; }
+.hook {
+  position: relative;
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  background: var(--hook-pad);
+  box-shadow: inset 0 0 0 1px var(--tape);
+}
+.hook::after {
+  content: "";
+  position: absolute;
+  left: 9px; top: 8px;
+  width: 7px; height: 14px;
+  border: 2.5px solid var(--metal);
+  border-top: 0;
+  border-radius: 0 0 7px 7px;
+}
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(8px, 2.6vw, 12px);
+}
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  perspective: 700px;
+}
+.tile::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -5px; left: 34%;
+  width: 32%; height: 11px;
+  background: var(--tape);
+  transform: rotate(var(--tr, 1deg));
+  pointer-events: none;
+}
+.flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.62s cubic-bezier(0.3, 0.9, 0.35, 1.15);
+}
+.tile.open .flip { transform: rotateY(180deg); }
+.face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 1px 2px var(--shadow), 0 8px 16px -10px var(--shadow);
+}
+.back { transform: rotateY(180deg); }
+.front .q {
+  font: 700 clamp(2rem, 11vw, 3.1rem) / 1 var(--font-display);
+  color: var(--foil-mark);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.front::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(112deg, transparent 38%, rgba(255, 255, 255, 0.62) 50%, transparent 62%);
+  transform: translateX(-110%);
+}
+.board.live .tile:not(.open) .front::after { animation: sheen 4.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
+@keyframes sheen { 0%, 55% { transform: translateX(-110%); } 85%, 100% { transform: translateX(110%); } }
+.board.live .tile:not(.open):hover .flip { transform: rotateY(-8deg) rotateX(4deg); }
+.back svg { width: 74%; height: 74%; }
+.tile.win .back { animation: glow 1.4s ease-in-out infinite alternate; }
+@keyframes glow { from { filter: brightness(1); } to { filter: brightness(1.12) saturate(1.15); } }
+.tile:disabled { cursor: default; }
+.board.instant .flip { transition: none; }
+
+.winline { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 3; }
+.winline line {
+  stroke: var(--bunny);
+  stroke-width: 11;
+  stroke-linecap: round;
+  opacity: 0.88;
+  stroke-dasharray: var(--len);
+  stroke-dashoffset: var(--len);
+  animation: draw 0.7s ease-out forwards;
+}
+.winline.bear line { stroke: var(--bear); }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+
+/* ---------- tallies ---------- */
+.score {
+  width: min(100%, 400px);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+.count { display: flex; align-items: center; gap: 7px; font: 600 1.25rem/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.count .mini { width: 34px; height: 34px; }
+.status { margin: 0; min-width: 0; text-align: center; font-size: 0.98rem; color: var(--text); text-wrap: balance; }
+.endbar { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+.btn {
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 2px solid var(--btn-bg);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font: 600 1rem/1 var(--font-body);
+}
+.btn.ghost { background: transparent; color: var(--text); }
+
+/* ---------- reveal ---------- */
+.reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--scrim);
+  animation: fade 0.3s ease;
+}
+@keyframes fade { from { opacity: 0; } }
+.reveal-card {
+  width: min(100%, 440px);
+  padding-inline: 20px;
+  padding-block: 28px 24px;
+  background: var(--wall);
+  border-top: 12px solid var(--trim);
+  border-radius: 4px;
+  box-shadow: 0 24px 60px -20px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  animation: rise 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes rise { from { transform: translateY(30px) scale(0.96); opacity: 0; } }
+.kicker { margin: 0; font: 600 0.8rem/1.2 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-soft); }
+.reveal-words { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; font-weight: 400; }
+.reveal-words .row { gap: calc(var(--cw) * 0.32); }
+.reveal-words .big { --cw: clamp(44px, 14vw, 68px); }
+.reveal-words .card { animation: drop 0.5s cubic-bezier(0.25, 1.4, 0.4, 1) both; animation-delay: var(--dl, 0s); }
+@keyframes drop { from { transform: translateY(-46px) rotate(-14deg); opacity: 0; } }
+.reveal-guess { margin: 0; max-width: 32ch; font-size: 1.05rem; text-wrap: balance; }
+.reveal-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+#flash {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), var(--flash) 0, var(--flash-soft) 20%, transparent 62%);
+}
+#flash.go { animation: flash 0.8s ease-out; }
+@keyframes flash { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: 0; } }
+.board.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes shake {
+  10%, 90% { transform: translate(-2px, 1px); }
+  20%, 80% { transform: translate(4px, -2px); }
+  30%, 50%, 70% { transform: translate(-7px, 2px); }
+  40%, 60% { transform: translate(7px, -1px); }
+}
+.tile.pop { animation: pop 0.6s cubic-bezier(0.2, 1.7, 0.4, 1); }
+@keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(1.16); } 100% { transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .board.shake, .tile.pop { animation: none; }
+  .flip { transition: none; }
+  .board.live .tile:not(.open) .front::after,
+  .tile.win .back,
+  .reveal, .reveal-card, .reveal-words .card, .guess.nudge .picks { animation: none; }
+  .winline line { animation: none; stroke-dashoffset: 0; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="bear" viewBox="0 0 100 100">
+      <circle cx="25" cy="30" r="14.5" fill="var(--bear)"/>
+      <circle cx="75" cy="30" r="14.5" fill="var(--bear)"/>
+      <circle cx="25" cy="30" r="7" fill="var(--foil-cut)"/>
+      <circle cx="75" cy="30" r="7" fill="var(--foil-cut)"/>
+      <ellipse cx="50" cy="57" rx="37" ry="32" fill="var(--bear)"/>
+      <ellipse cx="50" cy="69" rx="15" ry="11" fill="var(--foil-cut)"/>
+      <ellipse cx="50" cy="64.5" rx="5.6" ry="4" fill="var(--bear)"/>
+      <path d="M43.5 71.5 Q50 77 56.5 71.5" fill="none" stroke="var(--bear)" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="37" cy="51" r="3.4" fill="var(--foil-cut)"/>
+      <circle cx="63" cy="51" r="3.4" fill="var(--foil-cut)"/>
+    </symbol>
+    <symbol id="bunny" viewBox="0 0 100 100">
+      <ellipse cx="39" cy="29" rx="9" ry="25" transform="rotate(-7 39 29)" fill="var(--bunny)"/>
+      <ellipse cx="61" cy="29" rx="9" ry="25" transform="rotate(7 61 29)" fill="var(--bunny)"/>
+      <ellipse cx="39" cy="31" rx="4.2" ry="18" transform="rotate(-7 39 31)" fill="var(--foil-cut)"/>
+      <ellipse cx="61" cy="31" rx="4.2" ry="18" transform="rotate(7 61 31)" fill="var(--foil-cut)"/>
+      <ellipse cx="50" cy="69" rx="25" ry="22" fill="var(--bunny)"/>
+      <circle cx="41" cy="65" r="3.2" fill="var(--foil-cut)"/>
+      <circle cx="59" cy="65" r="3.2" fill="var(--foil-cut)"/>
+      <ellipse cx="50" cy="73" rx="3.2" ry="2.3" fill="var(--foil-cut)"/>
+      <path d="M46.5 77 Q50 80 53.5 77" fill="none" stroke="var(--foil-cut)" stroke-width="1.8" stroke-linecap="round"/>
+      <g stroke="var(--foil-cut)" stroke-width="1.4" stroke-linecap="round">
+        <line x1="29" y1="72" x2="40" y2="73.5"/>
+        <line x1="29" y1="78" x2="40" y2="76.5"/>
+        <line x1="71" y1="72" x2="60" y2="73.5"/>
+        <line x1="71" y1="78" x2="60" y2="76.5"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="trim" aria-hidden="true"></div>
+
+<main class="wall">
+  <h1 class="banner" aria-label="Tic tac toe, give me a boy or a girl">
+    <span class="row" aria-hidden="true">
+      <span class="word"><span class="card" style="--r:-1.5deg">T</span><span class="card t" style="--r:.8deg">I</span><span class="card" style="--r:-.4deg">C</span></span>
+      <span class="word"><span class="card t" style="--r:1.2deg">T</span><span class="card" style="--r:-.9deg">A</span><span class="card t" style="--r:.5deg">C</span></span>
+      <span class="word"><span class="card" style="--r:-.6deg">T</span><span class="card t" style="--r:1.4deg">O</span><span class="card" style="--r:-1.1deg">E</span></span>
+    </span>
+    <span class="row" aria-hidden="true">
+      <span class="word"><span class="card t" style="--r:.9deg">G</span><span class="card" style="--r:-1.3deg">I</span><span class="card t" style="--r:.3deg">V</span><span class="card" style="--r:-.7deg">E</span></span>
+      <span class="word"><span class="card t" style="--r:1.1deg">M</span><span class="card" style="--r:-.5deg">E</span></span>
+      <span class="word"><span class="card t" style="--r:-1deg">A</span><span class="card" style="--r:.7deg">N</span></span>
+    </span>
+    <span class="row" aria-hidden="true">
+      <span class="word"><span class="card t" style="--r:-1.2deg"><svg viewBox="0 0 40 50"><circle cx="16" cy="30" r="11"/><path d="M24 22 L34 12 M25.5 11.5 H34.5 V20.5"/></svg></span></span>
+      <span class="word"><span class="card" style="--r:.6deg">O</span><span class="card t" style="--r:-.8deg">R</span></span>
+      <span class="word"><span class="card" style="--r:1deg">A</span><span class="card t" style="--r:-.4deg">N</span></span>
+      <span class="word"><span class="card" style="--r:1.3deg"><svg viewBox="0 0 40 50"><circle cx="20" cy="17" r="11"/><path d="M20 28 V46 M12.5 38 H27.5"/></svg></span></span>
+    </span>
+  </h1>
+
+  <p class="how">Flip the gold squares one at a time. The first three in a row decides it: bears for a boy, bunnies for a girl.</p>
+
+  <section class="guess" id="guess" aria-labelledby="guessLabel">
+    <p class="label" id="guessLabel">Your guess</p>
+    <div class="picks">
+      <button class="pick boy" id="pickBoy" type="button" aria-pressed="false" data-guess="boy">
+        <span class="mini foil"><svg aria-hidden="true"><use href="#bear"/></svg></span>Boy
+      </button>
+      <button class="pick girl" id="pickGirl" type="button" aria-pressed="false" data-guess="girl">
+        <span class="mini foil"><svg aria-hidden="true"><use href="#bunny"/></svg></span>Girl
+      </button>
+    </div>
+    <p class="guess-note" id="guessNote">Pick one, then start flipping.</p>
+  </section>
+
+  <section class="board-wrap" aria-label="Game board">
+    <div class="hooks" aria-hidden="true"><span class="hook"></span><span class="hook"></span></div>
+    <div class="board" id="board">
+      <svg class="winline" id="winline" aria-hidden="true"></svg>
+    </div>
+  </section>
+
+  <div class="score">
+    <div class="count" title="Bears flipped"><span class="mini foil"><svg aria-hidden="true"><use href="#bear"/></svg></span><span id="nBear">0</span></div>
+    <p class="status" id="status" aria-live="polite">Pick your guess to start.</p>
+    <div class="count" title="Bunnies flipped"><span id="nBunny">0</span><span class="mini foil"><svg aria-hidden="true"><use href="#bunny"/></svg></span></div>
+  </div>
+
+  <div class="endbar" id="endbar" hidden>
+    <button class="btn ghost" id="showAgain" type="button">Show the answer</button>
+    <button class="btn" id="again2" type="button">Play again</button>
+  </div>
+</main>
+
+<div class="reveal" id="reveal" hidden role="dialog" aria-modal="true" aria-labelledby="revealWords">
+  <div class="reveal-card">
+    <p class="kicker" id="revealKicker"></p>
+    <h2 class="reveal-words" id="revealWords"></h2>
+    <p class="reveal-guess" id="revealGuess"></p>
+    <div class="reveal-actions">
+      <button class="btn ghost" id="seeBoard" type="button">See the board</button>
+      <button class="btn" id="again" type="button">Play again</button>
+    </div>
+  </div>
+</div>
+
+<div id="flash" hidden aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+// LOGIC START
+// The answer is stored encoded so it isn't sitting in the page text.
+const ANSWER = atob("Z2lybA==");
+const WIN = ANSWER === "girl" ? "bunny" : "bear";
+const LOSE = WIN === "bunny" ? "bear" : "bunny";
+// Cell values: 0 face down, 1 = winning animal, 2 = the other one.
+const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const P3 = [1,3,9,27,81,243,729,2187,6561];
+const enc = s => { let k = 0; for (let i = 0; i < 9; i++) k += s[i] * P3[i]; return k; };
+const fullLines = (s, v) => LINES.filter(l => l.every(i => s[i] === v));
+const threats = (s, v) => LINES.filter(l => {
+  let n = 0, e = 0;
+  for (const i of l) { if (s[i] === v) n++; else if (!s[i]) e++; }
+  return n === 2 && e === 1;
+}).length;
+
+// Every finished board looks like the wall: 5 winners, 4 others,
+// exactly one winning line, and the other animal never gets three.
+const CANDS = [];
+for (let m = 0; m < 512; m++) {
+  let c = 0; for (let i = 0; i < 9; i++) if (m >> i & 1) c++;
+  if (c !== 5) continue;
+  const b = []; for (let i = 0; i < 9; i++) b.push(m >> i & 1 ? 1 : 2);
+  if (fullLines(b, 1).length === 1 && fullLines(b, 2).length === 0) CANDS.push(b);
+}
+// Which partial boards can still finish as one of those.
+const CONS = new Uint8Array(19683);
+for (const b of CANDS) for (let m = 0; m < 512; m++) {
+  let k = 0; for (let i = 0; i < 9; i++) if (m >> i & 1) k += b[i] * P3[i];
+  CONS[k] = 1;
+}
+// Expected flips left before the game ends, if the player taps squares at random
+// and each flip is chosen to keep the game going as long as possible.
+const MEMO = new Float64Array(19683).fill(-1);
+function flipsLeft(s) {
+  const k = enc(s);
+  if (MEMO[k] >= 0) return MEMO[k];
+  let total = 0, n = 0;
+  for (let c = 0; c < 9; c++) {
+    if (s[c]) continue;
+    let best = -1;
+    for (const v of [1, 2]) {
+      s[c] = v;
+      if (CONS[enc(s)]) {
+        const sc = fullLines(s, 1).length ? 1 : 1 + flipsLeft(s);
+        if (sc > best) best = sc;
+      }
+      s[c] = 0;
+    }
+    total += best; n++;
+  }
+  const r = n ? total / n : 0;
+  MEMO[k] = r;
+  return r;
+}
+// Decide what's under the square the player just tapped.
+function choose(s, c, rand = Math.random) {
+  const opts = [];
+  for (const v of [1, 2]) {
+    s[c] = v;
+    if (CONS[enc(s)]) {
+      const sc = fullLines(s, 1).length ? 1 : 1 + flipsLeft(s);
+      opts.push({ v, sc, tease: threats(s, 2), r: rand() });
+    }
+    s[c] = 0;
+  }
+  opts.sort((a, b) => (Math.abs(b.sc - a.sc) > 1e-9 ? b.sc - a.sc : (b.tease - a.tease) || (a.r - b.r)));
+  return opts[0].v;
+}
+// Fill in the squares nobody flipped once the game is decided.
+function finishBoard(s, rand = Math.random) {
+  const m = CANDS.filter(b => b.every((v, i) => !s[i] || s[i] === v));
+  return m[Math.floor(rand() * m.length)];
+}
+// LOGIC END
+
+(function () {
+  const $ = id => document.getElementById(id);
+  const NAME = { 1: WIN, 2: LOSE };
+  const WINS = WIN === "bunny" ? "bunnies" : "bears";
+  const board = $("board"), winline = $("winline"), statusEl = $("status");
+  const picks = [$("pickBoy"), $("pickGirl")];
+  const tiles = [];
+  let s, guess, over, timers = [];
+
+  const pos = i => "Row " + (Math.floor(i / 3) + 1) + ", column " + (i % 3 + 1);
+  const face = v => '<svg aria-hidden="true"><use href="#' + NAME[v] + '"/></svg>';
+
+  for (let i = 0; i < 9; i++) {
+    const t = document.createElement("button");
+    t.type = "button";
+    t.className = "tile";
+    t.style.setProperty("--tr", ((i * 37) % 7 - 3) * 0.8 + "deg");
+    t.style.setProperty("--d", (i * 0.47) % 4 + "s");
+    t.innerHTML = '<span class="flip"><span class="face front foil"><span class="q" aria-hidden="true">?</span></span><span class="face back foil"></span></span>';
+    t.addEventListener("click", () => tap(i));
+    board.appendChild(t);
+    tiles.push(t);
+  }
+
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  function openTile(i) {
+    const t = tiles[i];
+    t.querySelector(".back").innerHTML = face(s[i]);
+    t.classList.add("open");
+    t.disabled = true;
+    t.setAttribute("aria-label", pos(i) + ": " + NAME[s[i]]);
+  }
+
+  function setGuess(g) {
+    guess = g;
+    picks.forEach(p => p.setAttribute("aria-pressed", String(p.dataset.guess === g)));
+    $("guessNote").textContent = g ? "Locked in: " + g + ". Guesses close on the first flip." : "Pick one, then start flipping.";
+    board.classList.toggle("live", !!g && !over);
+    updateStatus();
+  }
+
+  function lockGuess() {
+    picks.forEach(p => (p.disabled = true));
+    if (guess) $("guessNote").textContent = "Your guess: " + guess + ".";
+  }
+
+  function updateCounts() {
+    let w = 0, l = 0;
+    s.forEach(v => { if (v === 1) w++; else if (v === 2) l++; });
+    $("nBear").textContent = WIN === "bear" ? w : l;
+    $("nBunny").textContent = WIN === "bunny" ? w : l;
+  }
+
+  function updateStatus() {
+    let msg;
+    const flipped = s.filter(Boolean).length;
+    if (over) msg = "Three " + WINS + " in a row. It's a " + ANSWER + "!";
+    else if (!guess) msg = "Pick your guess to start.";
+    else if (!flipped) msg = "Tap any gold square to flip it.";
+    else {
+      const tw = threats(s, 1), tl = threats(s, 2);
+      const bears = WIN === "bear" ? tw : tl, bunnies = WIN === "bunny" ? tw : tl;
+      if (bears && bunnies) msg = "Bears and bunnies are both one away.";
+      else if (bears) msg = "Two bears lined up. One more ends it.";
+      else if (bunnies) msg = "Two bunnies lined up. One more ends it.";
+      else msg = 9 - flipped + " squares left. No three in a row yet.";
+    }
+    statusEl.textContent = msg;
+  }
+
+  function tap(i) {
+    if (over || s[i]) return;
+    if (!guess) {
+      const g = $("guess");
+      g.classList.remove("nudge"); void g.offsetWidth; g.classList.add("nudge");
+      statusEl.textContent = "Pick your guess first.";
+      picks[0].focus();
+      return;
+    }
+    lockGuess();
+    s[i] = choose(s, i);
+    openTile(i);
+    updateCounts();
+    if (fullLines(s, 1).length) finish(); else updateStatus();
+  }
+
+  function drawLine() {
+    const l = fullLines(s, 1)[0];
+    if (!l) { winline.innerHTML = ""; return; }
+    const br = board.getBoundingClientRect();
+    const c = i => { const r = tiles[i].getBoundingClientRect(); return [r.left + r.width / 2 - br.left, r.top + r.height / 2 - br.top, r.width]; };
+    const [x1, y1, w] = c(l[0]), [x2, y2] = c(l[2]);
+    const dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy), ext = w * 0.3;
+    const ax = x1 - dx / d * ext, ay = y1 - dy / d * ext, bx = x2 + dx / d * ext, by = y2 + dy / d * ext;
+    winline.setAttribute("viewBox", "0 0 " + br.width + " " + br.height);
+    winline.classList.toggle("bear", WIN === "bear");
+    winline.innerHTML = '<line x1="' + ax + '" y1="' + ay + '" x2="' + bx + '" y2="' + by + '" style="--len:' + Math.ceil(d + 2 * ext) + '"/>';
+  }
+
+  function finish() {
+    over = true;
+    board.classList.remove("live");
+    tiles.forEach(t => (t.disabled = true));
+    later(drawLine, 380);
+    later(boom, 640);
+    later(() => {
+      const full = finishBoard(s);
+      let k = 0;
+      for (let j = 0; j < 9; j++) if (!s[j]) {
+        const jj = j;
+        s[jj] = full[jj];
+        later(() => { openTile(jj); updateCounts(); }, k++ * 150);
+      }
+      later(() => { $("endbar").hidden = false; showReveal(); }, k * 150 + 700);
+    }, 2100);
+  }
+
+  function cardRow(text, cls, startTeal, baseDelay, allClass) {
+    let html = '<span class="row ' + (cls || "") + '">', n = 0;
+    for (const word of text.split(" ")) {
+      html += '<span class="word">';
+      for (const ch of word) {
+        const teal = allClass ? allClass === "t" : (n + startTeal) % 2 === 1;
+        const rot = (((n * 53) % 9) - 4) * 0.45;
+        html += '<span class="card' + (teal ? " t" : "") + '" style="--r:' + rot + "deg;--dl:" + (baseDelay + n * 0.07).toFixed(2) + 's">' + ch + "</span>";
+        n++;
+      }
+      html += "</span>";
+    }
+    return html + "</span>";
+  }
+
+  function showReveal() {
+    const word = ANSWER.toUpperCase() + "!";
+    $("revealKicker").textContent = "Three " + WINS + " in a row";
+    const w = $("revealWords");
+    w.setAttribute("aria-label", "It's a " + ANSWER + "!");
+    w.innerHTML = cardRow("IT'S A", "", 1, 0.05) + cardRow(word, "big", 0, 0.5, WIN === "bunny" ? "p" : "t");
+    $("revealGuess").textContent = !guess ? "" : guess === ANSWER ? "You called it. Nice guess!" : "You guessed " + guess + ". The " + WINS + " had other plans.";
+    $("reveal").hidden = false;
+    $("again").focus();
+    celebrateReveal();
+  }
+
+  function hideReveal() { $("reveal").hidden = true; }
+
+  function reset(data) {
+    timers.forEach(clearTimeout); timers = [];
+    hideReveal();
+    stopFx();
+    board.classList.remove("shake");
+    board.classList.add("instant");
+    s = Array.isArray(data && data.s) && data.s.length === 9 ? data.s.slice() : Array(9).fill(0);
+    over = false;
+    winline.innerHTML = "";
+    tiles.forEach((t, i) => {
+      t.classList.remove("open", "win", "pop");
+      t.querySelector(".back").innerHTML = "";
+      t.disabled = false;
+      t.setAttribute("aria-label", pos(i) + ": face down");
+    });
+    picks.forEach(p => (p.disabled = false));
+    $("endbar").hidden = true;
+    void board.offsetWidth;
+    s.forEach((v, i) => { if (v) openTile(i); });
+    void board.offsetWidth;
+    board.classList.remove("instant");
+    setGuess(data && data.guess || null);
+    if (s.some(Boolean)) lockGuess();
+    updateCounts();
+    if (fullLines(s, 1).length) {
+      over = true;
+      board.classList.remove("live");
+      tiles.forEach(t => (t.disabled = true));
+      fullLines(s, 1)[0].forEach(i => tiles[i].classList.add("win"));
+      if (s.some(v => !v)) { const full = finishBoard(s); s.forEach((v, i) => { if (!v) { s[i] = full[i]; openTile(i); } }); updateCounts(); }
+      $("endbar").hidden = false;
+      requestAnimationFrame(drawLine);
+    }
+    updateStatus();
+  }
+
+  // ---------- celebration ----------
+  const cv = $("confetti"), ctx = cv.getContext("2d");
+  let parts = [], rings = [], rainUntil = 0, raf = 0, last = 0, W = 0, H = 0, palette = [];
+
+  function sizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function readPalette() {
+    const css = getComputedStyle(document.documentElement);
+    const g = v => css.getPropertyValue(v).trim();
+    const win = g(WIN === "bunny" ? "--bunny" : "--bear");
+    palette = [g("--pink"), g("--teal"), win, win, win, g("--foil-b"), g("--foil-c"), "#ffffff"];
+  }
+  function piece(x, y, vx, vy) {
+    const r = Math.random();
+    return {
+      x, y, vx, vy,
+      kind: r < 0.55 ? "rect" : r < 0.8 ? "strip" : "dot",
+      w: 7 + Math.random() * 7, h: 4 + Math.random() * 5,
+      a: Math.random() * 6.28, va: (Math.random() - 0.5) * 0.4,
+      ph: Math.random() * 6.28, vph: 0.08 + Math.random() * 0.12,
+      c: palette[(Math.random() * palette.length) | 0]
+    };
+  }
+  function burst(x, y, n, power) {
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2, sp = power * (0.3 + Math.random() * 0.85);
+      parts.push(piece(x, y, Math.cos(ang) * sp, Math.sin(ang) * sp - power * 0.35));
+    }
+  }
+  function cannon(x, y, dir, n) {
+    for (let i = 0; i < n; i++) {
+      const ang = -Math.PI / 2 + dir * (0.2 + Math.random() * 0.45), sp = 15 + Math.random() * 11;
+      parts.push(piece(x, y, Math.cos(ang) * sp, Math.sin(ang) * sp));
+    }
+  }
+  function tick(t) {
+    const dt = Math.max(0, Math.min((t - last) / 16.67, 3)); last = Math.max(last, t);
+    ctx.clearRect(0, 0, W, H);
+    if (t < rainUntil) for (let i = 0; i < 2; i++) parts.push(piece(Math.random() * W, -16, (Math.random() - 0.5) * 2, 2 + Math.random() * 3));
+    for (const g of rings) {
+      g.r += (g.max - g.r) * 0.1 * dt;
+      g.o -= 0.028 * dt;
+      if (g.o <= 0) continue;
+      ctx.globalAlpha = g.o;
+      ctx.strokeStyle = g.c;
+      ctx.lineWidth = 12 * g.o + 1;
+      ctx.beginPath(); ctx.arc(g.x, g.y, Math.max(1, g.r), 0, 6.2832); ctx.stroke();
+    }
+    rings = rings.filter(g => g.o > 0);
+    ctx.globalAlpha = 1;
+    for (const p of parts) {
+      p.vy += 0.32 * dt;
+      p.vx *= Math.pow(0.97, dt);
+      if (p.vy > 4.5) p.vy -= (p.vy - 4.5) * 0.12 * dt;
+      p.ph += p.vph * dt;
+      p.x += (p.vx + Math.sin(p.ph) * 1.1) * dt;
+      p.y += p.vy * dt;
+      p.a += p.va * dt;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.a);
+      ctx.fillStyle = p.c;
+      if (p.kind === "dot") { ctx.beginPath(); ctx.arc(0, 0, p.h * 0.6, 0, 6.2832); ctx.fill(); }
+      else {
+        ctx.scale(1, Math.cos(p.ph));
+        if (p.kind === "strip") ctx.fillRect(-1.6, -p.w, 3.2, p.w * 2);
+        else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    }
+    parts = parts.filter(p => p.y < H + 40 && p.x > -80 && p.x < W + 80);
+    if (parts.length || rings.length || t < rainUntil) raf = requestAnimationFrame(tick);
+    else { raf = 0; ctx.clearRect(0, 0, W, H); }
+  }
+  function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } }
+  function stopFx() {
+    parts = []; rings = []; rainUntil = 0;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    ctx.clearRect(0, 0, cv.width, cv.height);
+  }
+  function flash(x, y) {
+    const f = $("flash");
+    f.style.setProperty("--fx", x + "px");
+    f.style.setProperty("--fy", y + "px");
+    f.hidden = false;
+    f.classList.remove("go"); void f.offsetWidth; f.classList.add("go");
+    later(() => { f.hidden = true; f.classList.remove("go"); }, 850);
+  }
+  // The moment three in a row lands.
+  function boom() {
+    const l = fullLines(s, 1)[0];
+    if (!l) return;
+    sizeCanvas(); readPalette();
+    const r = tiles[l[1]].getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    flash(x, y);
+    rings.push({ x, y, r: 10, max: Math.max(W, H) * 0.75, o: 1, c: palette[2] });
+    rings.push({ x, y, r: 0, max: Math.max(W, H) * 0.45, o: 0.85, c: palette[6] });
+    burst(x, y, 260, 17);
+    cannon(0, H, 1, 110);
+    cannon(W, H, -1, 110);
+    kick();
+    board.classList.remove("shake"); void board.offsetWidth; board.classList.add("shake");
+    l.forEach(i => tiles[i].classList.add("pop", "win"));
+    updateStatus();
+  }
+  // Keeps it raining while the answer is up.
+  function celebrateReveal() {
+    sizeCanvas(); readPalette();
+    rainUntil = performance.now() + 4500;
+    burst(W / 2, H * 0.28, 140, 13);
+    kick();
+  }
+
+  // ---------- wiring ----------
+  picks.forEach(p => p.addEventListener("click", () => { if (!p.disabled) setGuess(p.dataset.guess); }));
+  $("again").addEventListener("click", () => reset());
+  $("again2").addEventListener("click", () => reset());
+  $("seeBoard").addEventListener("click", hideReveal);
+  $("showAgain").addEventListener("click", showReveal);
+  $("reveal").addEventListener("click", e => { if (e.target.id === "reveal") hideReveal(); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && !$("reveal").hidden) hideReveal(); });
+  addEventListener("resize", () => { if (over) drawLine(); if (raf) sizeCanvas(); });
+
+  const hot = window.claude && window.claude.hot;
+  if (hot && hot.snapshot) hot.snapshot(() => ({ s: s.slice(), guess }));
+  const start = data => reset(data || {});
+  if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+})();
+</script>
+</body>
+</html>
